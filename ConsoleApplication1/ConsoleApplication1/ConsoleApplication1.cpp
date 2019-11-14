@@ -2,26 +2,12 @@
 //
 
 #include "pch.h"
+
 #include <iostream>
+#include <string>
+#include <sstream>
 
-/*
-int main()
-{
-    std::cout << "Hello World!\n"; 
-}
-*/
-
-// 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
-// 调试程序: F5 或调试 >“开始调试”菜单
-
-// 入门提示: 
-//   1. 使用解决方案资源管理器窗口添加/管理文件
-//   2. 使用团队资源管理器窗口连接到源代码管理
-//   3. 使用输出窗口查看生成输出和其他消息
-//   4. 使用错误列表窗口查看错误
-//   5. 转到“项目”>“添加新项”以创建新的代码文件，或转到“项目”>“添加现有项”以将现有代码文件添加到项目
-//   6. 将来，若要再次打开此项目，请转到“文件”>“打开”>“项目”并选择 .sln 文件
-
+using namespace std;
 
 
 /*****************************************************************************
@@ -33,65 +19,49 @@ int main()
 
 void GpibError(const char * msg); /* Error function declaration              */
 
+void sampleTest();
+bool DMM_Write(string strWrite);
+bool DMM_Read(string strWrite, string &strRead);
+bool DMM_ReadCurrent(double &value);
+
 int Device = 0;                   /* Device unit descriptor                  */
 int BoardIndex = 0;               /* Interface Index (GPIB0=0,GPIB1=1,etc.)  */
 
+
+//caijx
+int   PrimaryAddress = 22;// 2;      /* Primary address of the device           */
+int   SecondaryAddress = 0;    /* Secondary address of the device         */
+char  Buffer[101];             /* Read buffer                             */
+
+/**
+ * double转换为string
+ */
+string convertToString(double d) {
+	ostringstream os;
+	if (os << d)
+		return os.str();
+	return "invalid conversion";
+}
+/**
+ * double转string
+ */
+double convertFromString(string str) {
+	istringstream iss(str);
+	double x;
+	if (iss >> x)
+		return x;
+	return 0.0;
+}
+
 int main() {
-	//caijx
-	int   PrimaryAddress = 22;// 2;      /* Primary address of the device           */
-	int   SecondaryAddress = 0;    /* Secondary address of the device         */
-	char  Buffer[101];             /* Read buffer                             */
 
- /*****************************************************************************
-  * Initialization - Done only once at the beginning of your application.
-  *****************************************************************************/
+	//官方例子
+	sampleTest();
 
-	Device = ibdev(                /* Create a unit descriptor handle         */
-		BoardIndex,              /* Board Index (GPIB0 = 0, GPIB1 = 1, ...) */
-		PrimaryAddress,          /* Device primary address                  */
-		SecondaryAddress,        /* Device secondary address                */
-		T10s,                    /* Timeout setting (T10s = 10 seconds)     */
-		1,                       /* Assert EOI line at end of write         */
-		0);                      /* EOS termination mode                    */
-	if (Ibsta() & ERR) {           /* Check for GPIB Error                    */
-		GpibError("ibdev Error");
-	}
-
-	ibclr(Device);                 /* Clear the device                        */
-	if (Ibsta() & ERR) {
-		GpibError("ibclr Error");
-	}
-
-	/*****************************************************************************
-	 * Main Application Body - Write the majority of your GPIB code here.
-	 *****************************************************************************/
-
-	ibwrt(Device, "*IDN?", 5);     /* Send the identification query command   */
-	if (Ibsta() & ERR) {
-		GpibError("ibwrt Error");
-	}
-
-	ibrd(Device, Buffer, 100);     /* Read up to 100 bytes from the device    */
-	if (Ibsta() & ERR) {
-		GpibError("ibrd Error");
-	}
-
-	Buffer[Ibcnt()] = '\0';        /* Null terminate the ASCII string         */
-
-	printf("%s\n", Buffer);        /* Print the device identification         */
-
-
- /*****************************************************************************
-  * Uninitialization - Done only once at the end of your application.
-  *****************************************************************************/
-
-	ibonl(Device, 0);              /* Take the device offline                 */
-	if (Ibsta() & ERR) {
-		GpibError("ibonl Error");
-	}
+	double value = 0.0;
+	DMM_ReadCurrent(value);
 
 	return 0;
-
 }
 
 
@@ -159,6 +129,280 @@ void GpibError(const char *msg) {
 	/* Call ibonl to take the device and interface offline */
 	ibonl(Device, 0);
 
-	exit(1);	
+	exit(1);
 }
+
+void sampleTest()
+{
+	/*****************************************************************************
+  * Initialization - Done only once at the beginning of your application.
+  *****************************************************************************/
+
+	Device = ibdev(                /* Create a unit descriptor handle         */
+		BoardIndex,              /* Board Index (GPIB0 = 0, GPIB1 = 1, ...) */
+		PrimaryAddress,          /* Device primary address                  */
+		SecondaryAddress,        /* Device secondary address                */
+		T10s,                    /* Timeout setting (T10s = 10 seconds)     */
+		1,                       /* Assert EOI line at end of write         */
+		0);                      /* EOS termination mode                    */
+	if (Ibsta() & ERR) {           /* Check for GPIB Error                    */
+		GpibError("ibdev Error");
+	}
+
+	ibclr(Device);                 /* Clear the device                        */
+	if (Ibsta() & ERR) {
+		GpibError("ibclr Error");
+	}
+
+	/*****************************************************************************
+	 * Main Application Body - Write the majority of your GPIB code here.
+	 *****************************************************************************/
+
+	ibwrt(Device, "*IDN?", 5);     /* Send the identification query command   */
+	if (Ibsta() & ERR) {
+		GpibError("ibwrt Error");
+	}
+
+	ibrd(Device, Buffer, 100);     /* Read up to 100 bytes from the device    */
+	if (Ibsta() & ERR) {
+		GpibError("ibrd Error");
+	}
+
+	Buffer[Ibcnt()] = '\0';        /* Null terminate the ASCII string         */
+
+	printf("%s\n", Buffer);        /* Print the device identification         */
+
+
+ /*****************************************************************************
+  * Uninitialization - Done only once at the end of your application.
+  *****************************************************************************/
+
+	ibonl(Device, 0);              /* Take the device offline                 */
+	if (Ibsta() & ERR) {
+		GpibError("ibonl Error");
+	}
+}
+
+
+bool DMM_Write(string strWrite)
+{
+	Device = ibdev(                /* Create a unit descriptor handle         */
+		BoardIndex,              /* Board Index (GPIB0 = 0, GPIB1 = 1, ...) */
+		PrimaryAddress,          /* Device primary address                  */
+		SecondaryAddress,        /* Device secondary address                */
+		T10s,                    /* Timeout setting (T10s = 10 seconds)     */
+		1,                       /* Assert EOI line at end of write         */
+		0);                      /* EOS termination mode                    */
+	if (Ibsta() & ERR) {           /* Check for GPIB Error                    */
+		GpibError("ibdev Error");
+
+		return false;
+	}
+
+	ibclr(Device);                 /* Clear the device                        */
+	if (Ibsta() & ERR) {
+		GpibError("ibclr Error");
+
+		return false;
+	}
+
+	ibwrt(Device, strWrite.c_str(), strWrite.length());     /* Send the identification query command   */
+	if (Ibsta() & ERR) {
+		GpibError("ibwrt Error");
+
+		return false;
+	}
+
+	ibonl(Device, 0);
+	if (Ibsta() & ERR) {
+		GpibError("ibonl Error");
+
+		return false;
+	}
+
+	return true;
+
+	/*
+	//Open and intialize an GPIB instrument
+
+	int dev = GPIB.ibdev(0, addr, 0, (int)GPIB.gpib_timeout.T1s, 1, 0);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in initializing the GPIB instrument.");
+		return false;
+	}
+
+	//clear the specific GPIB instrument
+	GPIB.ibclr(dev);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in clearing the GPIB device.");
+		return false;
+	}
+
+	//Write a string command to a GPIB instrument using the ibwrt() command
+	GPIB.ibwrt(dev, strWrite, strWrite.Length);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in writing the string command to the GPIB instrument.");
+		return false;
+	}
+
+	//Offline the GPIB interface card
+	GPIB.ibonl(dev, 0);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in offline the GPIB interface card.");
+		return false;
+	}
+	return true;
+	*/
+}
+
+bool DMM_Read(string strWrite, string &strRead)
+{
+	/*****************************************************************************
+  * Initialization - Done only once at the beginning of your application.
+  *****************************************************************************/
+
+	Device = ibdev(                /* Create a unit descriptor handle         */
+		BoardIndex,              /* Board Index (GPIB0 = 0, GPIB1 = 1, ...) */
+		PrimaryAddress,          /* Device primary address                  */
+		SecondaryAddress,        /* Device secondary address                */
+		T10s,                    /* Timeout setting (T10s = 10 seconds)     */
+		1,                       /* Assert EOI line at end of write         */
+		0);                      /* EOS termination mode                    */
+	if (Ibsta() & ERR) {           /* Check for GPIB Error                    */
+		GpibError("ibdev Error");
+
+		return false;
+	}
+
+	ibclr(Device);                 /* Clear the device                        */
+	if (Ibsta() & ERR) {
+		GpibError("ibclr Error");
+
+		return false;
+	}
+
+	/*****************************************************************************
+	 * Main Application Body - Write the majority of your GPIB code here.
+	 *****************************************************************************/
+
+	ibwrt(Device, strWrite.c_str(), strWrite.length());     /* Send the identification query command   */
+	if (Ibsta() & ERR) {
+		GpibError("ibwrt Error");
+
+		return false;
+	}
+
+	ibrd(Device, Buffer, 100);     /* Read up to 100 bytes from the device    */
+	if (Ibsta() & ERR) {
+		GpibError("ibrd Error");
+	}
+
+	Buffer[Ibcnt()] = '\0';        /* Null terminate the ASCII string         */
+
+	//printf("%s\n", Buffer);        /* Print the device identification         */
+
+	strRead = Buffer;
+
+	ibonl(Device, 0);
+	if (Ibsta() & ERR) {
+		GpibError("ibonl Error");
+
+		return false;
+	}
+
+	return true;
+
+	/*
+	StringBuilder str = new StringBuilder(100);
+	//Open and intialize an GPIB instrument
+	int dev = GPIB.ibdev(0, addr, 0, (int)GPIB.gpib_timeout.T1s, 1, 0);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in initializing the GPIB instrument.");
+		return false;
+	}
+
+	//clear the specific GPIB instrument
+	GPIB.ibclr(dev);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in clearing the GPIB device.");
+		return false;
+	}
+
+	//Write a string command to a GPIB instrument using the ibwrt() command
+	GPIB.ibwrt(dev, strWrite, strWrite.Length);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in writing the string command to the GPIB instrument.");
+		return false;
+	}
+
+	//Read the response string from the GPIB instrument using the ibrd() command
+	GPIB.ibrd(dev, str, 100);
+	strRead = str.ToString();
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in reading the response string from the GPIB instrument.");
+		return false;
+	}
+
+	//Offline the GPIB interface card
+	GPIB.ibonl(dev, 0);
+	GPIB.gpib_get_globals(out ibsta, out iberr, out ibcnt, out ibcntl);
+	if ((ibsta & (int)GPIB.ibsta_bits.ERR) != 0)
+	{
+		//MessageBox.Show("Error in offline the GPIB interface card.");
+		return false;
+	}
+	return true;
+	*/
+}
+
+/// <summary>
+/// 数字万用表：读取电流
+/// </summary>
+bool DMM_ReadCurrent(double &value)
+{
+	string strRead;
+	string strWriteCmd = "CONF:CURR:DC DEF";
+	if (!DMM_Write(strWriteCmd)) return false;
+	strWriteCmd = "READ?";
+	if (!DMM_Read(strWriteCmd, strRead)) return false;
+
+	printf("%s\n", strRead.c_str());
+	value = convertFromString(strRead);
+
+	return true;
+	/*
+	try
+	{
+		string strRead = "";
+		if (write(DMMaddr, "CONF:CURR:DC DEF") == false) return false;
+		if (read(DMMaddr, "READ?", strRead) == false) return false;
+		value = Convert.ToDouble(strRead);
+		return true;
+	}
+	catch
+	{
+		//MessageBox.Show("Voltage Read Fail!");
+		return false;
+	}
+	*/
+}
+
+
+
 
