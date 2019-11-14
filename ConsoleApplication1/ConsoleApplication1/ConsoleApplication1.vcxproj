@@ -107,13 +107,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>D:\Program Files (x86)\National Instruments\Shared\ExternalCompilerSupport\C\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\National Instruments\Shared\ExternalCompilerSupport\C\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>"D:\Program Files (x86)\National Instruments\Shared\ExternalCompilerSupport\C\lib64\msvc\ni4882.obj" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>"C:\Program Files (x86)\National Instruments\Shared\ExternalCompilerSupport\C\lib64\msvc\ni4882.obj";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
